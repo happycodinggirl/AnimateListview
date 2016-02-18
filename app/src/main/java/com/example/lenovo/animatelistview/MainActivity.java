@@ -2,7 +2,6 @@ package com.example.lenovo.animatelistview;
 
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.Message;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -12,22 +11,13 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.ViewGroup;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.DecelerateInterpolator;
-import android.view.animation.LayoutAnimationController;
-import android.view.animation.TranslateAnimation;
-import android.widget.AbsListView;
 import android.widget.BaseAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import java.io.LineNumberInputStream;
 import java.util.ArrayList;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -46,7 +36,9 @@ public class MainActivity extends AppCompatActivity {
     int i=0;
 
     Timer timer;
-    boolean timerStarted;
+   // boolean timerStarted;
+
+
 
     long disappearDuration=9000;
     long addItemTime=System.currentTimeMillis();
@@ -85,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
                     case MotionEvent.ACTION_DOWN:
 
                         listView.setAlpha(1);
+                        listView.animate().cancel();
 
                         break;
                     case MotionEvent.ACTION_UP:
@@ -136,11 +129,11 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-        MyRunnable myRunnable=new MyRunnable();
+        //RemoveRunnable removeRunnable=new RemoveRunnable();
         handler=new MyHandler();
         addRunnable=new AddRunnable();
         handler.postDelayed(addRunnable,3000);
-        handler.postDelayed(myRunnable,4000);
+       // handler.postDelayed(removeRunnable,3000);
 
     }
 
@@ -161,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
                 long visibleCount=lastVisiblePos-firstVisiblePos+1;
                 for (int i= (int) firstVisiblePos;i<=lastVisiblePos;i++){
                     int percent= (int) (firstVisiblePos/(visibleCount));
-                    View view=listView.getChildAt((int) firstVisiblePos);
+                    final View view=listView.getChildAt(i);
                     float newAlpha=(float)0.5*(percent+alpha);
                     Log.v("TAG","  ===  ALPHA IS "+newAlpha);
                     if (newAlpha<0.2){
@@ -170,8 +163,13 @@ public class MainActivity extends AppCompatActivity {
                     if (view==null){
                         break;
                     }
-                    view.setAlpha(newAlpha);
-
+                    final float finalNewAlpha = newAlpha;
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            view.setAlpha(finalNewAlpha);
+                        }
+                    });
                 }
 
                 View view=listView.getChildAt((int) firstVisiblePos);
@@ -202,24 +200,40 @@ public class MainActivity extends AppCompatActivity {
             itemList.add("item" + j);
             addItemTime=System.currentTimeMillis();
 
-           // listView.setAlpha(1);
+            listView.setAlpha(1);
+            listView.animate().cancel();
+
+          //  Message message=Message.obtain();
+            handler.sendEmptyMessageDelayed(0, 4000);
+
+
 
 
             adapter.notifyDataSetChanged();
             listView.setSelection(adapter.getCount());
-            listView.getChildAt(listView.getLastVisiblePosition()).setAlpha(1);
+            /*View lastChild=listView.getChildAt(listView.getLastVisiblePosition()-1);
+            if (lastChild!=null){
+                lastChild.setAlpha(1);
+            }else{
+                Log.v("TAG","------lastChild == null");
+            }
+//            listView.getChildAt(listView.getLastVisiblePosition()).setAlpha(1);
             if (!timerStarted){
                 startTimer();
             }
             if (j==0){
                 return;
-            }
-            handler.postDelayed(this,9000);
+            }*/
+            Random random=new Random();
+            int randomInt=random.nextInt(9);
+            Log.v("PLU","---random int is "+randomInt);
+
+            handler.postDelayed(this,randomInt*1000);
 
         }
     }
 
-    class MyRunnable implements Runnable {
+    class RemoveRunnable implements Runnable {
 
 
         @Override
@@ -229,10 +243,10 @@ public class MainActivity extends AppCompatActivity {
 
 
             i++;
-            if (i>=10){
+           /* if (i>=10){
                 return;
-            }
-            handler.postDelayed(this,10000);
+            }*/
+            handler.postDelayed(this,4000);
         }
     }
 
@@ -241,6 +255,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
+            int what=msg.what;
+            switch (what){
+                case 0:
+                    listView.setAlpha(1);
+                    listView.animate().alpha(0.2f).setDuration(3000).start();
+                    break;
+            }
         }
     }
 
@@ -288,25 +309,5 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
 }
